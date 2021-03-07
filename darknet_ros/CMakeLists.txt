@@ -15,21 +15,17 @@ add_definitions(-DDARKNET_FILE_PATH="${DARKNET_PATH}")
 find_package(CUDA QUIET)
 if (CUDA_FOUND)
   find_package(CUDA REQUIRED)
-  message(STATUS "CUDA Version: ${CUDA_VERSION_STRINGS}")
-  message(STATUS "CUDA Libararies: ${CUDA_LIBRARIES}")
+  message(STATUS "CUDA Version: ${CUDA_VERSION}")
+  message(STATUS "CUDA Libraries: ${CUDA_LIBRARIES}")
   set(
     CUDA_NVCC_FLAGS
     ${CUDA_NVCC_FLAGS};
     -O3
-    -gencode arch=compute_30,code=sm_30
-    -gencode arch=compute_35,code=sm_35
-    -gencode arch=compute_50,code=[sm_50,compute_50]
-    -gencode arch=compute_52,code=[sm_52,compute_52]
-    -gencode arch=compute_61,code=sm_61
-    -gencode arch=compute_62,code=sm_62
+    -gencode arch=compute_86,code=sm_86
   )
   add_definitions(-DGPU)
 else()
+  message(WARNING "CUDA not found")
   list(APPEND LIBRARIES "m")
 endif()
 
@@ -139,6 +135,7 @@ if (CUDA_FOUND)
 
   link_directories(
     ${CUDA_TOOLKIT_ROOT_DIR}/lib
+    ${CUDA_TOOLKIT_ROOT_DIR}/lib64
   )
 
   cuda_add_library(${PROJECT_NAME}_lib
