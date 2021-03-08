@@ -170,6 +170,7 @@ class YoloObjectDetector
   image **demoAlphabet_;
   int demoClasses_;
 
+  int publishRate_ = 10;
   network *net_;
   std_msgs::Header headerBuff_[3];
   image buff_[3];

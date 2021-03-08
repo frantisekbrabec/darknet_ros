@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.12)
+cmake_minimum_required(VERSION 3.0.2)
 project(darknet_ros)
 
 # Set c++11 cmake flags
@@ -39,7 +39,7 @@ if ( X11_FOUND )
   message ( STATUS " X11_LIBRARIES: " ${X11_LIBRARIES} )
 endif ( X11_FOUND )
 
-# Find rquired packeges
+# Find required packeges
 find_package(Boost REQUIRED COMPONENTS thread)
 find_package(OpenCV REQUIRED)
 include_directories(${OpenCV_INCLUDE_DIRS})

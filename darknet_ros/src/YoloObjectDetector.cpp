@@ -124,6 +124,8 @@ void YoloObjectDetector::init()
   // Load network.
   setupNetwork(cfg, weights, data, thresh, detectionNames, numClasses_,
                 0, 0, 1, 0.5, 0, 0, 0, 0);
+
+  nodeHandle_.param("publishers/rate_hz", publishRate_, 10);
   yoloThread_ = std::thread(&YoloObjectDetector::yolo, this);
 
   // Initialize publisher and subscriber.
@@ -477,6 +479,10 @@ void YoloObjectDetector::setupNetwork(char *cfgfile, char *weightfile, char *dat
 void YoloObjectDetector::yolo()
 {
   const auto wait_duration = std::chrono::milliseconds(2000);
+
+  ROS_INFO("[YoloObjectDetector] rate= %d", publishRate_);
+  ros::Rate rate(publishRate_);
+
   while (!getImageStatus()) {
     printf("Waiting for image.\n");
     if (!isNodeRunning()) {
@@ -556,6 +562,7 @@ void YoloObjectDetector::yolo()
     if (!isNodeRunning()) {
       demoDone_ = true;
     }
+    rate.sleep();
   }
 
 }
