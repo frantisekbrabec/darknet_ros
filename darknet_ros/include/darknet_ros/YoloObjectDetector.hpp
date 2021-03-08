@@ -107,30 +107,11 @@ class YoloObjectDetector
   void cameraCallback(const sensor_msgs::ImageConstPtr& msg);
 
   /*!
-   * Check for objects action goal callback.
-   */
-  void checkForObjectsActionGoalCB();
-
-  /*!
-   * Check for objects action preempt callback.
-   */
-  void checkForObjectsActionPreemptCB();
-
-  /*!
-   * Check if a preempt for the check for objects action has been requested.
-   * @return false if preempt has been requested or inactive.
-   */
-  bool isCheckingForObjects() const;
-
-  /*!
    * Publishes the detection image.
    * @return true if successful.
    */
   bool publishDetectionImage(const cv::Mat& detectionImage);
 
-  //! Typedefs.
-  typedef actionlib::SimpleActionServer<darknet_ros_msgs::CheckForObjectsAction> CheckForObjectsActionServer;
-  typedef std::shared_ptr<CheckForObjectsActionServer> CheckForObjectsActionServerPtr;
 
   //! ROS node handle.
   ros::NodeHandle nodeHandle_;
@@ -138,9 +119,6 @@ class YoloObjectDetector
   //! Class labels.
   int numClasses_;
   std::vector<std::string> classLabels_;
-
-  //! Check for objects action server.
-  CheckForObjectsActionServerPtr checkForObjectsActionServer_;
 
   //! Advertise and subscribe to image topics.
   image_transport::ImageTransport imageTransport_;
@@ -174,7 +152,6 @@ class YoloObjectDetector
   std_msgs::Header headerBuff_[3];
   image buff_[3];
   image buffLetter_[3];
-  int buffId_[3];
   int buffIndex_ = 0;
   cv::Mat ipl_;
   float fps_ = 0;
@@ -204,7 +181,6 @@ class YoloObjectDetector
   cv::Mat camImageCopy_;
   boost::shared_mutex mutexImageCallback_;
 
-  bool imageStatus_ = false;
   boost::shared_mutex mutexImageStatus_;
 
   bool isNodeRunning_ = true;
@@ -221,30 +197,15 @@ class YoloObjectDetector
 
   detection *avgPredictions(network *net, int *nboxes);
 
-  void *detectInThread();
-
-  void *fetchInThread();
-
-  void *displayInThread(void *ptr);
-
-  void *displayLoop(void *ptr);
-
-  void *detectLoop(void *ptr);
-
   void setupNetwork(char *cfgfile, char *weightfile, char *datafile, float thresh,
                     char **names, int classes,
                     int delay, char *prefix, int avg_frames, float hier, int w, int h,
                     int frames, int fullscreen);
 
-  void yolo();
-
   MatWithHeader_ getIplImageWithHeader();
-
-  bool getImageStatus(void);
 
   bool isNodeRunning(void);
 
-  void *publishInThread();
 };
 
 } /* namespace darknet_ros*/
