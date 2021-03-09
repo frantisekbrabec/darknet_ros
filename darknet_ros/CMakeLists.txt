@@ -12,6 +12,7 @@ message(STATUS "Darknet path dir = ${DARKNET_PATH}")
 add_definitions(-DDARKNET_FILE_PATH="${DARKNET_PATH}")
 
 # Find CUDA
+# https://arnon.dk/matching-sm-architectures-arch-and-gencode-for-various-nvidia-cards/
 find_package(CUDA QUIET)
 if (CUDA_FOUND)
   find_package(CUDA REQUIRED)
@@ -21,6 +22,13 @@ if (CUDA_FOUND)
     CUDA_NVCC_FLAGS
     ${CUDA_NVCC_FLAGS};
     -O3
+    -gencode arch=compute_52,code=[sm_52,compute_52]
+    -gencode arch=compute_61,code=sm_61
+    -gencode arch=compute_62,code=sm_62
+    -gencode arch=compute_70,code=sm_70
+    -gencode arch=compute_72,code=sm_72
+    -gencode arch=compute_75,code=sm_75
+    -gencode arch=compute_80,code=sm_80
     -gencode arch=compute_86,code=sm_86
   )
   add_definitions(-DGPU)

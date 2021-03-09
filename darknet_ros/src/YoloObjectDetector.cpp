@@ -480,7 +480,7 @@ void YoloObjectDetector::yolo()
 {
   const auto wait_duration = std::chrono::milliseconds(2000);
 
-  ROS_INFO("[YoloObjectDetector] rate= %d", publishRate_);
+  ROS_INFO("[YoloObjectDetector] rate=%d Hz", publishRate_);
   ros::Rate rate(publishRate_);
 
   while (!getImageStatus()) {
