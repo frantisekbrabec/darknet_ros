@@ -36,7 +36,6 @@
 #include <darknet_ros_msgs/BoundingBoxes.h>
 #include <darknet_ros_msgs/BoundingBox.h>
 #include <darknet_ros_msgs/ObjectCount.h>
-#include <darknet_ros_msgs/CheckForObjectsAction.h>
 
 // Darknet.
 #ifdef GPU
@@ -104,33 +103,15 @@ class YoloObjectDetector
    * Callback of camera.
    * @param[in] msg image pointer.
    */
-  void cameraCallback(const sensor_msgs::ImageConstPtr& msg);
+  void cameraCallback(const sensor_msgs::ImageConstPtr& msg, int image_stream_index);
 
-  /*!
-   * Check for objects action goal callback.
-   */
-  void checkForObjectsActionGoalCB();
-
-  /*!
-   * Check for objects action preempt callback.
-   */
-  void checkForObjectsActionPreemptCB();
-
-  /*!
-   * Check if a preempt for the check for objects action has been requested.
-   * @return false if preempt has been requested or inactive.
-   */
-  bool isCheckingForObjects() const;
 
   /*!
    * Publishes the detection image.
    * @return true if successful.
    */
-  bool publishDetectionImage(const cv::Mat& detectionImage);
+  bool publishDetectionImage(const cv::Mat& detectionImage, int image_stream_index);
 
-  //! Typedefs.
-  typedef actionlib::SimpleActionServer<darknet_ros_msgs::CheckForObjectsAction> CheckForObjectsActionServer;
-  typedef std::shared_ptr<CheckForObjectsActionServer> CheckForObjectsActionServerPtr;
 
   //! ROS node handle.
   ros::NodeHandle nodeHandle_;
@@ -139,16 +120,16 @@ class YoloObjectDetector
   int numClasses_;
   std::vector<std::string> classLabels_;
 
-  //! Check for objects action server.
-  CheckForObjectsActionServerPtr checkForObjectsActionServer_;
 
   //! Advertise and subscribe to image topics.
   image_transport::ImageTransport imageTransport_;
 
+  int nr_haulers, nr_scouts, nr_excavators;
+
   //! ROS subscriber and publisher.
-  image_transport::Subscriber imageSubscriber_;
-  ros::Publisher objectPublisher_;
-  ros::Publisher boundingBoxesPublisher_;
+  std::vector<image_transport::Subscriber> imageSubscribers_;
+  std::vector<ros::Publisher> objectPublishers_;
+  std::vector<ros::Publisher> boundingBoxesPublishers_;
 
   //! Detected objects.
   std::vector<std::vector<RosBox_> > rosBoxes_;
@@ -160,7 +141,7 @@ class YoloObjectDetector
   int frameHeight_;
 
   //! Publisher of the bounding box image.
-  ros::Publisher detectionImagePublisher_;
+  std::vector<ros::Publisher> detectionImagePublishers_;
 
   // Yolo running on thread.
   std::thread yoloThread_;
@@ -201,11 +182,11 @@ class YoloObjectDetector
   int fullScreen_;
   char *demoPrefix_;
 
-  std_msgs::Header imageHeader_;
-  cv::Mat camImageCopy_;
+  std::vector<std_msgs::Header> imageHeaders_;
+  std::vector<cv::Mat> camImageCopies_;
   boost::shared_mutex mutexImageCallback_;
 
-  bool imageStatus_ = false;
+  std::vector<bool> imageStatus_;
   boost::shared_mutex mutexImageStatus_;
 
   bool isNodeRunning_ = true;
@@ -224,7 +205,7 @@ class YoloObjectDetector
 
   void *detectInThread();
 
-  void *fetchInThread();
+  void *fetchInThread(int image_stream_index);
 
   void *displayInThread(void *ptr);
 
@@ -239,13 +220,13 @@ class YoloObjectDetector
 
   void yolo();
 
-  MatWithHeader_ getIplImageWithHeader();
+  MatWithHeader_ getIplImageWithHeader(int image_stream_index);
 
-  bool getImageStatus(void);
+  bool getImageStatus(int image_stream_index);
 
   bool isNodeRunning(void);
 
-  void *publishInThread();
+  void *publishInThread(int image_stream_index);
 };
 
 } /* namespace darknet_ros*/
