@@ -309,7 +309,7 @@ void *YoloObjectDetector::detectInThread()
   float nms = .4;
 
   layer l = net_->layers[net_->n - 1];
-  float *X = buffLetter_[(buffIndex_ + 2) % 3].data;
+  float *X = buffLetter_[(buffIndex_ + 0) % 3].data;
   float *prediction = network_predict(net_, X);
 
   rememberNetwork(net_);
@@ -319,7 +319,7 @@ void *YoloObjectDetector::detectInThread()
 
   if (nms > 0) do_nms_obj(dets, nboxes, l.classes, nms);
 
-  image display = buff_[(buffIndex_+2) % 3];
+  image display = buff_[(buffIndex_+0) % 3];
   draw_detections(display, dets, nboxes, demoThresh_, demoNames_, demoAlphabet_, demoClasses_);
 
   // extract the bounding boxes and send them to ROS
@@ -392,41 +392,6 @@ void *YoloObjectDetector::fetchInThread(int image_stream_index)
   return 0;
 }
 
-void *YoloObjectDetector::displayInThread(void *ptr)
-{
-  int c = show_image(buff_[(buffIndex_ + 1)%3], "YOLO V3", waitKeyDelay_);
-  if (c != -1) c = c%256;
-  if (c == 27) {
-      demoDone_ = 1;
-      return 0;
-  } else if (c == 82) {
-      demoThresh_ += .02;
-  } else if (c == 84) {
-      demoThresh_ -= .02;
-      if(demoThresh_ <= .02) demoThresh_ = .02;
-  } else if (c == 83) {
-      demoHier_ += .02;
-  } else if (c == 81) {
-      demoHier_ -= .02;
-      if(demoHier_ <= .0) demoHier_ = .0;
-  }
-  return 0;
-}
-
-void *YoloObjectDetector::displayLoop(void *ptr)
-{
-  while (1) {
-    displayInThread(0);
-  }
-}
-
-void *YoloObjectDetector::detectLoop(void *ptr)
-{
-  while (1) {
-    detectInThread();
-  }
-}
-
 void YoloObjectDetector::setupNetwork(char *cfgfile, char *weightfile, char *datafile, float thresh,
                                       char **names, int classes,
                                       int delay, char *prefix, int avg_frames, float hier, int w, int h,
@@ -469,9 +434,6 @@ void YoloObjectDetector::yolo()
     std::this_thread::sleep_for(wait_duration);
   }
 
-  std::thread detect_thread;
-  std::thread fetch_thread;
-
   srand(2222222);
 
   int i;
@@ -504,25 +466,12 @@ void YoloObjectDetector::yolo()
 
   int count = 0;
 
-  if (!demoPrefix_ && viewImage_) {
-      cv::namedWindow("YOLO V3", cv::WINDOW_NORMAL);
-    if (fullScreen_) {
-      cv::setWindowProperty("YOLO V3", cv::WND_PROP_FULLSCREEN, cv::WINDOW_FULLSCREEN);
-    } else {
-      cv::moveWindow("YOLO V3", 0, 0);
-      cv::resizeWindow("YOLO V3", 640, 480);
-    }
-  }
-
   while (!demoDone_) {
     for (int image_stream_index = 0; image_stream_index < nr_excavators + nr_haulers + nr_scouts; image_stream_index++) {
-      buffIndex_ = (buffIndex_ + 1) % 3;
-      fetch_thread = std::thread(&YoloObjectDetector::fetchInThread, this, image_stream_index);
-      detect_thread = std::thread(&YoloObjectDetector::detectInThread, this);
-      generate_image(buff_[(buffIndex_ + 1)%3], ipl_);
+      fetchInThread(image_stream_index);
+      detectInThread();
+      generate_image(buff_[(buffIndex_ + 0)%3], ipl_);
       publishInThread(image_stream_index);
-      fetch_thread.join();
-      detect_thread.join();
       ++count;
       if (!isNodeRunning()) {
         demoDone_ = true;
@@ -600,7 +549,7 @@ void *YoloObjectDetector::publishInThread(int image_stream_index)
     }
     boundingBoxesResults_.header.stamp = ros::Time::now();
     boundingBoxesResults_.header.frame_id = "detection";
-    boundingBoxesResults_.image_header = headerBuff_[(buffIndex_ + 1) % 3];
+    boundingBoxesResults_.image_header = headerBuff_[(buffIndex_ + 0) % 3];
     boundingBoxesPublishers_[image_stream_index].publish(boundingBoxesResults_);
   } else {
     darknet_ros_msgs::ObjectCount msg;
